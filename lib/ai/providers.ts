@@ -1,36 +1,25 @@
-import { gateway } from "@ai-sdk/gateway";
-import {
-  customProvider,
-  extractReasoningMiddleware,
-  wrapLanguageModel,
-} from "ai";
-import { isTestEnvironment } from "../constants";
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createLanguageModel } from 'ai';
 
-export const myProvider = isTestEnvironment
-  ? (() => {
-      const {
-        artifactModel,
-        chatModel,
-        reasoningModel,
-        titleModel,
-      } = require("./models.mock");
-      return customProvider({
-        languageModels: {
-          "chat-model": chatModel,
-          "chat-model-reasoning": reasoningModel,
-          "title-model": titleModel,
-          "artifact-model": artifactModel,
-        },
-      });
-    })()
-  : customProvider({
-      languageModels: {
-        "chat-model": gateway.languageModel("xai/grok-2-vision-1212"),
-        "chat-model-reasoning": wrapLanguageModel({
-          model: gateway.languageModel("xai/grok-3-mini"),
-          middleware: extractReasoningMiddleware({ tagName: "think" }),
-        }),
-        "title-model": gateway.languageModel("xai/grok-2-1212"),
-        "artifact-model": gateway.languageModel("xai/grok-2-1212"),
-      },
+// Initialize Google Gemini provider with your custom API key
+const google = createGoogleGenerativeAI({
+  apiKey: process.env.GOOGLE_API_KEY!,
+});
+
+// Map your custom chat models to Gemini models
+const modelMap = {
+  'chat-model': google('gemini-2.5-flash'),
+  'chat-model-reasoning': google('gemini-2.5-pro'),
+};
+
+// This function integrates with the rest of your system
+export const myProvider = {
+  languageModel: (modelId: string) => {
+    const model = modelMap[modelId];
+    if (!model) throw new Error(`Unknown model id: ${modelId}`);
+    return createLanguageModel({
+      model,
+      modelId,
     });
+  },
+};
