@@ -1,3 +1,40 @@
 {
-  "buildCommand": "npm install --legacy-peer-deps && npm run build"
+  "version": 3,
+  "name": "ai-chatbot",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["lib/db/**", "pages/**", "public/**"],
+        "installCommand": "npm install --legacy-peer-deps",
+        "buildCommand": "npm run build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1",
+      "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+      "continue": true
+    },
+    {
+      "src": "/api/(.*)",
+      "status": 404,
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "dest": "/api/404.json"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs20.x"
+    }
+  }
 }
